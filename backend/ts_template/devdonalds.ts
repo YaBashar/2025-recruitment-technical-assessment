@@ -121,13 +121,14 @@ const addCookbook = (entry: any): object | null => {
 // Endpoint that returns a summary of a recipe that corresponds to a query name
 app.get("/summary", (req:Request, res:Response) => {
   // TODO: implement me
-  const input = req.body
+  const input = req.query
   try {
     const getFood = getInfo(input)
     return res.status(200).json(getFood)
 
   } catch (error) {
     if (error instanceof Error) {
+      console.log(error.message)
       return res.status(400).send("Cooked")
     }
   }
@@ -135,27 +136,34 @@ app.get("/summary", (req:Request, res:Response) => {
 });
 
 const getInfo = (entry) => {
-  const check = cookbook.indexOf((e) => e.name === entry.name)
-  if (check === -1) {
+  const check = cookbook.findIndex((e) => e.name === entry.name)
+  if (check == -1) {
     throw new Error ('Entry does not exist in cookbook')
   }
 
-  const found = cookbook[check].name
-  for (const item of found.requiredItems) {
-    console.log(item.name)
-  }
+  const found = cookbook[check]
+  console.log(found)
 
   return {
-    // "name" : found.name,
-    // "cookTime" : 10,
-    // "ingredients" : [
-    //   {
-    //     "name": "Beef",
-    //     "quantity" : 5,
-    //   }
-    // ]
+    "name" : found.name,
+    // "cookTime" : ,
+    "ingredients" : baseIngredients(found)
   }
 
+}
+
+function baseIngredients(found) {
+  if (found.type === "ingredient") {
+    return [found.name];
+  }
+
+  // Recursive case: resolve all required items
+  let ingredients = [];
+  for (const item of found.requiredItems) {
+    ingredients = ingredients.concat(baseIngredients(item))
+  }
+
+  return ingredients;
 }
 
 // =============================================================================
